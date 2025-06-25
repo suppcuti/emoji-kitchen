@@ -154,14 +154,14 @@
             let mobileSearchResults = [];
 
             // Load emoji data
-            fetch('/keywords.json')
+            fetch('keywords.json')
                 .then(response => {
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                     return response.json();
                 })
                 .then(keywordsData => {
                     supportedCodepoints = new Set(keywordsData.knownSupportedEmoji);
-                    return fetch('/data-by-emoji.json')
+                    return fetch('data-by-emoji.json')
                         .then(response => {
                             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                             return response.json();
@@ -177,7 +177,7 @@
                 })
                 .catch(error => {
                     console.error('Error fetching emoji data:', error);
-                    fetch('/keywords.json')
+                    fetch('keywords.json')
                         .then(response => response.json())
                         .then(keywordsData => {
                             supportedCodepoints = new Set(keywordsData.knownSupportedEmoji);
