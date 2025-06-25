@@ -407,7 +407,7 @@
 
             function searchEmojis(query, callback) {
                 $.ajax({
-                    url: '../data-by-emoji.json',
+                    url: 'data-by-emoji.json',
                     method: 'GET',
                     success: function(data) {
                         const results = Object.keys(data).filter(emoji => {
