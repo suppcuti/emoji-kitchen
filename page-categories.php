@@ -1,0 +1,485 @@
+<?php
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Kitchen</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .emoji {
+            font-family: 'Noto Color Emoji', sans-serif;
+            font-size: 1.5rem;
+        }
+        /* Ensure Tailwind doesn't override MUI icons */
+        .material-icons {
+            font-family: 'Material Icons' !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center min-h-screen">
+    <div id="root" class="container mx-auto flex flex-col md:flex-row gap-6 my-10 relative">
+        <!-- Left Emoji Column -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Left Search -->
+            <div class="p-2">
+                <div class="relative">
+                    <input id="left-search" type="text" placeholder="Search emojis" class="w-full p-2 border border-gray-300 rounded-md" />
+                    <button id="left-randomize" class="absolute right-2 top-1/2 -translate-y-1/2 text-2xl">
+                        <span class="emoji">🎲</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Left Emoji List -->
+            <div id="left-emoji-list" class="grid grid-cols-3 sm:grid-cols-5 gap-1 p-2 overflow-y-auto max-h-96"></div>
+        </div>
+        <!-- Middle Emoji Column -->
+        <div class="flex-1 overflow-y-auto flex flex-col items-center md:flex">
+            <!-- Emoji Preview -->
+            <div id="emoji-preview" class="flex justify-center items-center gap-4 p-2 w-full hidden md:flex">
+                <div id="left-emoji-preview" class="bg-white p-2 rounded-md">
+                    <img id="left-emoji-preview-img" src="" alt="" class="hidden w-16 h-16" />
+                </div>
+                <span class="text-lg">+</span>
+                <div id="right-emoji-preview" class="bg-white p-2 rounded-md">
+                    <img id="right-emoji-preview-img" src="" alt="" class="hidden w-16 h-16" />
+                </div>
+
+            </div>
+            <div id="middle-emoji-list" class="grid grid-cols-2 gap-1 p-2 w-full"></div>
+            <div id="loading-spinner" class="hidden animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            <img id="result" src="" alt="" class="hidden max-w-50 my-2" />
+            <div id="copy-button" class="hidden">
+                <button class="text-blue-600 hover:text-blue-800" onclick="copyImage()">
+                    <span class="material-icons">content_copy</span>
+                </button>
+            </div>
+        </div>
+        <!-- Right Emoji Column -->
+        <div class="flex-1 overflow-y-auto hidden md:block">
+            <!-- Right Search -->
+            <div class="p-2">
+                <div class="relative">
+                    <input id="right-search" type="text" placeholder="Search emojis" class="w-full p-2 border border-gray-300 rounded-md" disabled />
+                    <button id="right-randomize" class="absolute right-2 top-1/2 -translate-y-1/2 text-2xl">
+                        <span class="emoji">🎲</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Right Emoji List -->
+            <div id="right-emoji-list" class="grid grid-cols-3 sm:grid-cols-5 gap-1 p-2 overflow-y-auto max-h-96"></div>
+        </div>
+        <!-- Mobile Top Section --> 
+        <div id="mobile-top-section" class="bg-white shadow-md sticky top-2 z-20 mx-3 p-4 rounded-lg md:hidden">
+            <div class="flex justify-center mb-2">
+                <div class="inline-flex rounded-md shadow-sm">
+                    <button id="mode-combine" class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-200 rounded-l-md hover:bg-blue-200">Combine</button>
+                    <button id="mode-browse" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100">Browse</button>
+                </div>
+            </div>
+            <div id="mobile-combine-view" class="grid grid-cols-12 gap-2">
+                <!-- Left Emoji -->
+                <div class="col-span-4">
+                    <div id="mobile-left-emoji" class="bg-white p-2 rounded-md cursor-pointer border border-gray-200">
+                        <img id="mobile-left-emoji-img" src="" alt="" class="w-full aspect-square" />
+                    </div>
+                    <button id="mobile-left-randomize" class="block mx-auto mt-1 text-2xl">
+                        <span class="emoji">🎲</span>
+                    </button>
+                </div>
+                <div class="col-span-1 flex items-center justify-center pb-12">
+                    <span class="text-lg">+</span>
+                </div>
+                <!-- Right Emoji -->
+                <div class="col-span-4">
+                    <div id="mobile-right-emoji" class="bg-white p-2 rounded-md cursor-pointer border border-gray-200">
+                        <img id="mobile-right-emoji-img" src="" alt="" class="w-full aspect-square" />
+                    </div>
+                    <button id="mobile-right-randomize" class="block mx-auto mt-1 text-2xl">
+                        <span class="emoji">🎲</span>
+                    </button>
+                </div>
+                <div class="col-span-1 flex items-center justify-center pb-12">
+                    <span class="text-lg">=</span>
+                </div>
+                <!-- Result -->
+                <div class="col-span-12">
+                    <div class="bg-white p-2 rounded-md border border-gray-200">
+                        <div id="mobile-loading-spinner" class="hidden animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+                        <img id="mobile-result" src="" alt="" class="w-full aspect-square" />
+                    </div>
+                    <button id="mobile-copy" class="block mx-auto mt-1 text-blue-600 hover:text-blue-800">
+                        <span class="material-icons">content_copy</span>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-browse-view" class="grid grid-cols-4 gap-1 p-2 max-h-48 overflow-y-auto hidden"></div>
+            <div id="copied-chip" class="absolute bottom-20 bg-blue-500 text-white text-sm px-2 py-1 rounded-full hidden">Copied</div>
+        </div>
+        <!-- Mobile Search and Emoji List -->
+        <div id="mobile-emoji-list" class="flex-1 overflow-y-auto md:hidden">
+            <div class="p-2">
+                <input id="mobile-search" type="text" placeholder="Search emojis" class="w-full p-2 border border-gray-300 rounded-md" />
+            </div>
+            <div id="mobile-emoji-list-container" class="grid grid-cols-8 gap-1 p-2 overflow-y-auto max-h-96"></div>
+        </div>
+        <!-- Full Randomize FAB -->
+        <button id="full-randomize" class="fixed bottom-5 right-4 md:right-[35%] bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-blue-600 z-10">
+            <span class="emoji text-2xl">🎲</span>
+        </button>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '🌟', '🍕', '🍔', '🍎', '🐱', '🐶', '🐼', '🐧', '🐢', '🚀', '✈️', '🌍', '🌈', '🎈', '🔘'];
+            let supportedCodepoints = new Set();
+            let emojiData = {};
+            let selectedLeftEmoji = '';
+            let selectedRightEmoji = '';
+            let isMobile = window.innerWidth <= 768;
+            let isKeyboardOpen = window.innerHeight <= 512;
+            let leftEmojiSelected = true;
+            let selectedMode = 'combine';
+            let isLoading = false;
+            let leftSearchResults = [];
+            let rightSearchResults = [];
+            let mobileSearchResults = [];
+
+            // Load emoji data
+            fetch('/keywords.json')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return response.json();
+                })
+                .then(keywordsData => {
+                    supportedCodepoints = new Set(keywordsData.knownSupportedEmoji);
+                    return fetch('/data-by-emoji.json')
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => {
+                            emojiData = data;
+                            emojis = Object.keys(data).filter(emoji => {
+                                const codepoint = emoji.codePointAt(0).toString(16).toLowerCase();
+                                return data[emoji].group !== 'Flags' && supportedCodepoints.has(codepoint);
+                            });
+                            initializeApp();
+                        });
+                })
+                .catch(error => {
+                    console.error('Error fetching emoji data:', error);
+                    fetch('/keywords.json')
+                        .then(response => response.json())
+                        .then(keywordsData => {
+                            supportedCodepoints = new Set(keywordsData.knownSupportedEmoji);
+                            emojis = emojis.filter(emoji => {
+                                const codepoint = emoji.codePointAt(0).toString(16).toLowerCase();
+                                return supportedCodepoints.has(codepoint);
+                            });
+                            initializeApp();
+                        })
+                        .catch(() => initializeApp());
+                });
+
+            function initializeApp() {
+                updateLayout();
+                populateEmojiList('#left-emoji-list', handleLeftEmojiClicked, leftSearchResults, selectedLeftEmoji);
+                populateEmojiList('#right-emoji-list', handleRightEmojiClicked, rightSearchResults, selectedRightEmoji);
+                populateEmojiList('#mobile-emoji-list-container', handleMobileEmojiClicked, mobileSearchResults, leftEmojiSelected ? selectedLeftEmoji : selectedRightEmoji);
+                if (isMobile) handleFullEmojiRandomize();
+            }
+
+            function updateLayout() {
+                if (isMobile) {
+                    $('#mobile-top-section, #mobile-emoji-list').removeClass('hidden');
+                    $('#middle-emoji-list, .right-container').addClass('hidden');
+                    $('#right-search').prop('disabled', true);
+                    $('#mobile-combine-view').removeClass('hidden');
+                    $('#mobile-browse-view').addClass('hidden');
+                    if (isKeyboardOpen) $('#mobile-top-section').addClass('hidden');
+                    else $('#mobile-top-section').removeClass('hidden');
+                    $('#full-randomize').removeClass('right-[35%]').addClass('right-4');
+                } else {
+                    $('#mobile-top-section, #mobile-emoji-list').addClass('hidden');
+                    $('#middle-emoji-list, .right-container').removeClass('hidden');
+                    $('#right-search').prop('disabled', selectedLeftEmoji === '');
+                    $('#emoji-preview').removeClass('hidden');
+                    $('#full-randomize').removeClass('right-4').addClass('right-[35%]');
+                }
+                updateDesktopView();
+                updateMobileView();
+            }
+
+            function populateEmojiList(containerId, clickHandler, searchResults, selectedEmoji) {
+                const container = $(containerId);
+                container.empty();
+                const emojisToShow = searchResults.length > 0 ? searchResults : emojis;
+                emojisToShow.forEach(emoji => {
+                    const span = $('<span>').addClass('emoji p-1 rounded hover:bg-gray-200 cursor-pointer').text(emoji);
+                    if (emoji === selectedEmoji) span.addClass('bg-blue-100');
+                    span.on('click', () => clickHandler(emoji));
+                    container.append(span);
+                });
+            }
+
+            function handleLeftEmojiClicked(emoji) {
+                if (isMobile) {
+                    if (selectedLeftEmoji !== emoji) {
+                        selectedLeftEmoji = emoji;
+                        updateMobileView();
+                    }
+                } else {
+                    if (selectedLeftEmoji === emoji) {
+                        selectedLeftEmoji = '';
+                        selectedRightEmoji = '';
+                    } else if (selectedRightEmoji !== '') {
+                        selectedLeftEmoji = emoji;
+                        selectedRightEmoji = '';
+                    } else {
+                        selectedLeftEmoji = emoji;
+                    }
+                    updateDesktopView();
+                }
+            }
+
+            function handleRightEmojiClicked(emoji) {
+                if (isMobile) {
+                    if (selectedRightEmoji !== emoji) {
+                        selectedRightEmoji = emoji;
+                        updateMobileView();
+                    }
+                } else {
+                    selectedRightEmoji = selectedRightEmoji === emoji ? '' : emoji;
+                    updateDesktopView();
+                }
+            }
+
+            function handleMobileEmojiClicked(emoji) {
+                if (leftEmojiSelected) {
+                    selectedLeftEmoji = emoji;
+                } else {
+                    selectedRightEmoji = emoji;
+                }
+                updateMobileView();
+            }
+
+            function handleLeftEmojiRandomize() {
+                const possibleEmojis = emojis.filter(e => e !== selectedLeftEmoji);
+                selectedLeftEmoji = possibleEmojis[Math.floor(Math.random() * possibleEmojis.length)];
+                if (!isMobile) selectedRightEmoji = '';
+                leftEmojiSelected = true;
+                updateView();
+            }
+
+            function handleRightEmojiRandomize() {
+                const possibleEmojis = emojis.filter(e => e !== selectedRightEmoji);
+                selectedRightEmoji = possibleEmojis[Math.floor(Math.random() * possibleEmojis.length)];
+                if (isMobile) leftEmojiSelected = false;
+                updateView();
+            }
+
+            function handleFullEmojiRandomize() {
+                const randomLeft = emojis[Math.floor(Math.random() * emojis.length)];
+                const possibleRight = emojis.filter(e => e !== randomLeft);
+                selectedLeftEmoji = randomLeft;
+                selectedRightEmoji = possibleRight[Math.floor(Math.random() * possibleRight.length)];
+                leftSearchResults = [];
+                rightSearchResults = [];
+                mobileSearchResults = [];
+                updateView();
+            }
+
+            function updateView() {
+                if (isMobile) updateMobileView();
+                else updateDesktopView();
+            }
+
+            function updateDesktopView() {
+                populateEmojiList('#left-emoji-list', handleLeftEmojiClicked, leftSearchResults, selectedLeftEmoji);
+                populateEmojiList('#right-emoji-list', handleRightEmojiClicked, rightSearchResults, selectedRightEmoji);
+                $('#right-search').prop('disabled', selectedLeftEmoji === '');
+                const middleList = $('#middle-emoji-list');
+                middleList.empty();
+                $('#result, #copy-button, #loading-spinner').addClass('hidden');
+                // Update preview
+                $('#left-emoji-preview-img').attr('src', selectedLeftEmoji ? `https://fonts.gstatic.com/s/e/notoemoji/latest/${selectedLeftEmoji.codePointAt(0).toString(16)}/emoji.svg` : '').toggleClass('hidden', !selectedLeftEmoji);
+                $('#right-emoji-preview-img').attr('src', selectedRightEmoji ? `https://fonts.gstatic.com/s/e/notoemoji/latest/${selectedRightEmoji.codePointAt(0).toString(16)}/emoji.svg` : '').toggleClass('hidden', !selectedRightEmoji);
+                $('#result-preview-img').attr('src', selectedLeftEmoji && selectedRightEmoji ? `https://emojik.vercel.app/s/${encodeURIComponent(selectedLeftEmoji)}_${encodeURIComponent(selectedRightEmoji)}?size=256` : '').toggleClass('hidden', !(selectedLeftEmoji && selectedRightEmoji));
+                if (selectedLeftEmoji && selectedRightEmoji) {
+                    isLoading = true;
+                    $('#loading-spinner').removeClass('hidden');
+                    const url = `https://emojik.vercel.app/s/${encodeURIComponent(selectedLeftEmoji)}_${encodeURIComponent(selectedRightEmoji)}?size=256`;
+                    $('#result').attr('src', url);
+                } else if (selectedLeftEmoji && !selectedRightEmoji) {
+                    middleList.append('<div class="p-2 text-gray-600">Select a right emoji to see the combination.</div>');
+                } else {
+                    middleList.append('<div class="p-2 text-gray-600">Select emojis to combine.</div>');
+                }
+            }
+
+            function updateMobileView() {
+                $('#mobile-left-emoji-img').attr('src', selectedLeftEmoji ? `https://fonts.gstatic.com/s/e/notoemoji/latest/${selectedLeftEmoji.codePointAt(0).toString(16)}/emoji.svg` : '').toggleClass('hidden', !selectedLeftEmoji);
+                $('#mobile-right-emoji-img').attr('src', selectedRightEmoji ? `https://fonts.gstatic.com/s/e/notoemoji/latest/${selectedRightEmoji.codePointAt(0).toString(16)}/emoji.svg` : '').toggleClass('hidden', !selectedRightEmoji);
+                $('#mobile-left-emoji').toggleClass('bg-blue-100', leftEmojiSelected);
+                $('#mobile-right-emoji').toggleClass('bg-blue-100', !leftEmojiSelected);
+                populateEmojiList('#mobile-emoji-list-container', handleMobileEmojiClicked, mobileSearchResults, leftEmojiSelected ? selectedLeftEmoji : selectedRightEmoji);
+                $('#mobile-result, #mobile-loading-spinner, #mobile-copy').addClass('hidden');
+                if (selectedMode === 'combine') {
+                    $('#mobile-combine-view').removeClass('hidden');
+                    $('#mobile-browse-view').addClass('hidden');
+                    if (selectedLeftEmoji && selectedRightEmoji) {
+                        isLoading = true;
+                        $('#mobile-loading-spinner').removeClass('hidden');
+                        $('#mobile-copy').removeClass('hidden');
+                        const url = `https://emojik.vercel.app/s/${encodeURIComponent(selectedLeftEmoji)}_${encodeURIComponent(selectedRightEmoji)}?size=256`;
+                        $('#mobile-result').attr('src', url).removeClass('hidden');
+                    }
+                } else if (selectedMode === 'browse' && (selectedLeftEmoji || selectedRightEmoji)) {
+                    $('#mobile-combine-view').addClass('hidden');
+                    $('#mobile-browse-view').removeClass('hidden');
+                    const baseEmoji = leftEmojiSelected ? selectedLeftEmoji : selectedRightEmoji;
+                    $('#mobile-browse-view').empty().append('<div class="p-2 text-gray-600">Browse mode not fully implemented.</div>');
+                } else {
+                    $('#mobile-combine-view').removeClass('hidden');
+                    $('#mobile-browse-view').addClass('hidden');
+                }
+            }
+
+            function copyImage() {
+                const url = `https://emojik.vercel.app/s/${encodeURIComponent(selectedLeftEmoji)}_${encodeURIComponent(selectedRightEmoji)}?size=256`;
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        if (isMobile) {
+                            $('#copied-chip').removeClass('hidden');
+                            setTimeout(() => $('#copied-chip').addClass('hidden'), 1000);
+                        }
+                    })
+                    .catch(console.error);
+            }
+
+            function searchEmojis(query, callback) {
+                $.ajax({
+                    url: '../data-by-emoji.json',
+                    method: 'GET',
+                    success: function(data) {
+                        const results = Object.keys(data).filter(emoji => {
+                            const info = data[emoji];
+                            const codepoint = emoji.codePointAt(0).toString(16).toLowerCase();
+                            return supportedCodepoints.has(codepoint) &&
+                                info.group !== 'Flags' &&
+                                (info.name.toLowerCase().includes(query) || info.group.toLowerCase().includes(query));
+                        });
+                        callback(results);
+                    },
+                    error: function(error) {
+                        console.error('Error searching emojis:', error);
+                        callback([]);
+                    }
+                });
+            }
+
+            // Event Listeners
+            $(window).on('resize', () => {
+                isMobile = window.innerWidth <= 768;
+                isKeyboardOpen = window.innerHeight <= 512;
+                updateLayout();
+            });
+
+            $('#left-randomize').click(handleLeftEmojiRandomize);
+            $('#right-randomize').click(handleRightEmojiRandomize);
+            $('#full-randomize').click(handleFullEmojiRandomize);
+            $('#mobile-left-randomize').click(handleLeftEmojiRandomize);
+            $('#mobile-right-randomize').click(handleRightEmojiRandomize);
+            $('#mobile-copy').click(copyImage);
+
+            $('#mode-combine').click(() => {
+                selectedMode = 'combine';
+                $('#mode-combine').addClass('bg-blue-100 text-blue-700').removeClass('bg-white text-gray-700');
+                $('#mode-browse').addClass('bg-white text-gray-700').removeClass('bg-blue-100 text-blue-700');
+                updateMobileView();
+            });
+
+            $('#mode-browse').click(() => {
+                selectedMode = 'browse';
+                $('#mode-browse').addClass('bg-blue-100 text-blue-700').removeClass('bg-white text-gray-700');
+                $('#mode-combine').addClass('bg-white text-gray-700').removeClass('bg-blue-100 text-blue-700');
+                updateMobileView();
+            });
+
+            $('#mobile-left-emoji').click(() => {
+                leftEmojiSelected = true;
+                updateMobileView();
+            });
+
+            $('#mobile-right-emoji').click(() => {
+                leftEmojiSelected = false;
+                updateMobileView();
+            });
+
+            $('#left-search').on('input', () => {
+                const query = $('#left-search').val().toLowerCase();
+                if (query === '') {
+                    leftSearchResults = [];
+                    populateEmojiList('#left-emoji-list', handleLeftEmojiClicked, leftSearchResults, selectedLeftEmoji);
+                } else {
+                    searchEmojis(query, results => {
+                        leftSearchResults = results;
+                        populateEmojiList('#left-emoji-list', handleLeftEmojiClicked, leftSearchResults, selectedLeftEmoji);
+                    });
+                }
+            });
+
+            $('#right-search').on('input', () => {
+                const query = $('#right-search').val().toLowerCase();
+                if (query === '') {
+                    rightSearchResults = [];
+                    populateEmojiList('#right-emoji-list', handleRightEmojiClicked, rightSearchResults, selectedRightEmoji);
+                } else {
+                    searchEmojis(query, results => {
+                        rightSearchResults = results;
+                        populateEmojiList('#right-emoji-list', handleRightEmojiClicked, rightSearchResults, selectedRightEmoji);
+                    });
+                }
+            });
+
+            $('#mobile-search').on('input', () => {
+                const query = $('#mobile-search').val().toLowerCase();
+                if (query === '') {
+                    mobileSearchResults = [];
+                    populateEmojiList('#mobile-emoji-list-container', handleMobileEmojiClicked, mobileSearchResults, leftEmojiSelected ? selectedLeftEmoji : selectedRightEmoji);
+                } else {
+                    searchEmojis(query, results => {
+                        mobileSearchResults = results;
+                        populateEmojiList('#mobile-emoji-list-container', handleMobileEmojiClicked, mobileSearchResults, leftEmojiSelected ? selectedLeftEmoji : selectedRightEmoji);
+                    });
+                }
+            });
+
+            $('#result, #mobile-result, #result-preview-img').on('error', function() {
+                $(this).addClass('hidden');
+                isLoading = false;
+                $('#loading-spinner, #mobile-loading-spinner').addClass('hidden');
+            });
+
+            $('#result, #mobile-result, #result-preview-img').on('load', function() {
+                $(this).removeClass('hidden');
+                isLoading = false;
+                $('#loading-spinner, #mobile-loading-spinner').addClass('hidden');
+                if ('clipboard' in navigator && !isMobile) $('#copy-button').removeClass('hidden');
+                if (isMobile && selectedLeftEmoji && selectedRightEmoji) $('#mobile-copy').removeClass('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
