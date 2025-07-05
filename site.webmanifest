@@ -1,0 +1,18 @@
+{
+    "name": "Emoji Kitchen",
+    "short_name": "EmojiKitchen",
+    "description": "Create custom emoji combinations with Emoji Kitchen",
+    "icons": [
+        {
+            "src": "favicon.png",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "start_url": "/emoji-kitchen/",
+    "display": "standalone",
+    "theme_color": "#3B82F6",
+    "background_color": "#F3F4F6",
+    "orientation": "portrait-primary",
+    "categories": ["entertainment", "utilities"]
+}
